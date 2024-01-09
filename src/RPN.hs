@@ -4,6 +4,7 @@ module RPN
     , BinaryOp(..)
     , Token(..)
     , parse
+    , Equation(..)
     ) where
 import Data.Map (Map, lookup, empty)
 import Text.Read (readMaybe)
@@ -15,11 +16,11 @@ data BinaryOp
     | Pow
 
 data Token
-    = Literal !Int
+    = Literal !Double
     | BinaryOp !BinaryOp
     | Variable !String
 
-type Stack = [Int]
+type Stack = [Double]
 newtype Equation = Equation [Token]
 
 binaryop :: BinaryOp -> Stack -> Maybe Stack
@@ -28,16 +29,16 @@ binaryop o (x:y:xs) = Just $ (:xs)
         Add -> y + x
         Sub -> y - x
         Mul -> y * x
-        Pow -> y ^ x
+        Pow -> y ** x
 binaryop _ _        = Nothing
 
-evaluate :: Equation -> Maybe Int
+evaluate :: Equation -> Maybe Double
 evaluate = (`evaluateWith` empty)
 
-evaluateWith :: Equation -> Map String Int -> Maybe Int
+evaluateWith :: Equation -> Map String Double -> Maybe Double
 evaluateWith (Equation ts') hm = f ts' []
     where
-        f :: [Token] -> Stack -> Maybe Int
+        f :: [Token] -> Stack -> Maybe Double
         f [] []     = Nothing
         f [] (x:_)  = Just x
         f (t:ts) xs = f ts =<< case t of
