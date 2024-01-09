@@ -3,8 +3,11 @@ module RPN
     , evaluate
     , BinaryOp(..)
     , Token(..)
+    , parse
     ) where
 import Data.Map (Map, lookup, empty)
+import Text.Read (readMaybe)
+import Data.Char (isDigit)
 
 data BinaryOp
     = Add
@@ -41,3 +44,17 @@ evaluateWith ts' hm = f ts' []
             Literal x  -> Just $ x : xs
             BinaryOp o -> binaryop o xs
             Variable i -> (:xs) <$> Data.Map.lookup i hm
+
+parseLexeme :: String -> Maybe Token
+parseLexeme xs = Just $ case xs of
+    "+" -> BinaryOp Add
+    "-" -> BinaryOp Sub
+    "*" -> BinaryOp Mul
+    "^" -> BinaryOp Pow
+    _   ->
+        case readMaybe xs of
+            Just n  -> Literal n
+            Nothing -> Variable xs
+
+parse :: String -> Maybe [Token]
+parse = sequence . map parseLexeme . words
