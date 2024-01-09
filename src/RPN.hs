@@ -1,8 +1,10 @@
 module RPN
-    ( evaluate
+    ( evaluateWith
+    , evaluate
     , BinaryOp(..)
     , Token(..)
     ) where
+import Data.Map (Map, lookup, empty)
 
 data BinaryOp
     = Add
@@ -13,6 +15,7 @@ data BinaryOp
 data Token
     = Literal !Int
     | BinaryOp !BinaryOp
+    | Variable !String
 
 type Stack = [Int]
 
@@ -26,7 +29,10 @@ binaryop o (x:y:xs) = Just $ (:xs)
 binaryop _ _        = Nothing
 
 evaluate :: [Token] -> Maybe Int
-evaluate = (`f` [])
+evaluate = (`evaluateWith` empty)
+
+evaluateWith :: [Token] -> Map String Int -> Maybe Int
+evaluateWith ts' hm = f ts' []
     where
         f :: [Token] -> Stack -> Maybe Int
         f [] []     = Nothing
@@ -34,4 +40,4 @@ evaluate = (`f` [])
         f (t:ts) xs = f ts =<< case t of
             Literal x  -> Just $ x : xs
             BinaryOp o -> binaryop o xs
-
+            Variable i -> (:xs) <$> Data.Map.lookup i hm
