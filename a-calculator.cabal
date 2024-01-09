@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Grapher
       RPN
   other-modules:
       Paths_a_calculator
@@ -36,6 +37,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , sdl2
   default-language: Haskell2010
 
 executable a-calculator-exe
@@ -51,6 +53,7 @@ executable a-calculator-exe
       a-calculator
     , base >=4.7 && <5
     , containers
+    , sdl2
   default-language: Haskell2010
 
 test-suite a-calculator-test
@@ -67,4 +70,5 @@ test-suite a-calculator-test
       a-calculator
     , base >=4.7 && <5
     , containers
+    , sdl2
   default-language: Haskell2010

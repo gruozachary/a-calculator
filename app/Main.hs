@@ -1,10 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import RPN (evaluate, parse)
+import RPN (parse)
+import Grapher (drawGraph)
+import SDL (initializeAll, createWindow, defaultWindow, createRenderer, defaultRenderer)
 
 main :: IO ()
 main = do
-    putStrLn "Please enter an RPN expression:"
-    x <- maybe "Invalid expression!" (show . evaluate) . parse <$> getLine
-    putStrLn x
-    main
+    initializeAll
+    w <- createWindow "Graph" defaultWindow
+    r <- createRenderer w (-1) defaultRenderer
+
+    putStrLn "Enter a valid RPN expression: "
+    e' <- parse <$> getLine
+
+    case e' of
+        Just e -> drawGraph r e
+        Nothing -> putStrLn "Invalid expression"

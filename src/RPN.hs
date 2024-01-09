@@ -13,6 +13,7 @@ data BinaryOp
     = Add
     | Sub
     | Mul
+    | Div
     | Pow
 
 data Token
@@ -29,6 +30,7 @@ binaryop o (x:y:xs) = Just $ (:xs)
         Add -> y + x
         Sub -> y - x
         Mul -> y * x
+        Div -> y / x
         Pow -> y ** x
 binaryop _ _        = Nothing
 
@@ -51,6 +53,7 @@ parseLexeme xs = Just $ case xs of
     "+" -> BinaryOp Add
     "-" -> BinaryOp Sub
     "*" -> BinaryOp Mul
+    "/" -> BinaryOp Div
     "^" -> BinaryOp Pow
     _   ->
         case readMaybe xs of

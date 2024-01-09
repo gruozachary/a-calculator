@@ -34,13 +34,54 @@ packages:
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
-# extra-deps:
-# - acme-missiles-0.3
+extra-deps:
+  - sdl2-2.5.5.0
+  - StateVar-1.2.2
+  - linear-1.22
+  - vector-0.13.1.0
+  - adjunctions-4.4.2
+  - base-orphans-0.9.1
+  - bytes-0.17.3
+  - cereal-0.5.8.3
+  - distributive-0.6.2.1
+  - hashable-1.4.3.0
+  - indexed-traversable-0.1.3
+  - lens-5.2.3
+  - primitive-0.9.0.0
+  - random-1.2.1.1
+  - reflection-2.1.7
+  - semigroupoids-6.0.0.1
+  - tagged-0.8.8
+  - transformers-compat-0.7.2
+  - unordered-containers-0.2.20
+  - vector-stream-0.1.0.1
+  - void-0.7.3
+  - assoc-1.1
+  - bifunctors-5.6.1
+  - binary-orphans-1.0.4.1
+  - call-stack-0.4.0
+  - comonad-5.0.8
+  - contravariant-1.5.5
+  - foldable1-classes-compat-0.1
+  - free-5.2
+  - indexed-traversable-instances-0.1.1.2
+  - kan-extensions-5.2.5
+  - parallel-3.2.2.0
+  - profunctors-5.6.2
+  - scientific-0.3.7.0
+  - semigroups-0.20
+  - splitmix-0.1.0.5
+  - strict-0.5
+  - th-abstraction-0.6.0.0
+  - these-1.2
+  - OneTuple-0.4.1.1@sha256:632dfded172086fb9f0e26d3578bcfffa3fb6d135ea5a8de17b7a33ff6e6e682,2575
+  - integer-logarithms-1.0.3.1
+  - invariant-0.6.2
+  - transformers-base-0.4.6
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: []
-
+# extra-deps:
 # Override default flag values for local packages and extra-deps
 # flags: {}
 
