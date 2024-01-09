@@ -7,7 +7,6 @@ module RPN
     ) where
 import Data.Map (Map, lookup, empty)
 import Text.Read (readMaybe)
-import Data.Char (isDigit)
 
 data BinaryOp
     = Add
@@ -21,6 +20,7 @@ data Token
     | Variable !String
 
 type Stack = [Int]
+newtype Equation = Equation [Token]
 
 binaryop :: BinaryOp -> Stack -> Maybe Stack
 binaryop o (x:y:xs) = Just $ (:xs) 
@@ -31,11 +31,11 @@ binaryop o (x:y:xs) = Just $ (:xs)
         Pow -> y ^ x
 binaryop _ _        = Nothing
 
-evaluate :: [Token] -> Maybe Int
+evaluate :: Equation -> Maybe Int
 evaluate = (`evaluateWith` empty)
 
-evaluateWith :: [Token] -> Map String Int -> Maybe Int
-evaluateWith ts' hm = f ts' []
+evaluateWith :: Equation -> Map String Int -> Maybe Int
+evaluateWith (Equation ts') hm = f ts' []
     where
         f :: [Token] -> Stack -> Maybe Int
         f [] []     = Nothing
@@ -56,5 +56,5 @@ parseLexeme xs = Just $ case xs of
             Just n  -> Literal n
             Nothing -> Variable xs
 
-parse :: String -> Maybe [Token]
-parse = sequence . map parseLexeme . words
+parse :: String -> Maybe Equation
+parse = fmap Equation . mapM parseLexeme . words
