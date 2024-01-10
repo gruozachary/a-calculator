@@ -20,19 +20,21 @@ data PlotSettings = PlotSettings
 
 type Plot = ReaderT PlotSettings IO
 
+pairs :: [a] -> Maybe [(a, a)]
+pairs xs@(_:ys) = Just (zip xs ys)
+pairs []        = Nothing
+
 getCoordinate :: Equation -> Double -> Maybe (Double, Double)
 getCoordinate e x = (x,)
     <$> evaluateWith e (fromList [("x", x)])
 
 processCoordinate :: (Double, Double) -> Plot (Point V2 CInt)
-processCoordinate c = do
-    let (x, y) = c
-
+processCoordinate (x, y) = do
     (sx, sy) <- asks scale
-
+    (dx, dy) <- asks dimensions
     return $ P $ V2
-        (round $ 400 + x * sx)
-        (round $ 300 - y * sy)
+        (round $ (fromIntegral dx / 2) + x * sx)
+        (round $ (fromIntegral dy / 2) - y * sy)
 
 handleEvents :: Plot ()
 handleEvents = void pollEvents
@@ -54,14 +56,14 @@ drawGraph' r = do
     handleEvents
     clearScreen r
     drawAxis r
-
     rendererDrawColor r $= V4 255 0 0 255
-    e <- asks equation
+
+    e       <- asks equation
     (sx, _) <- asks scale
     case mapM (getCoordinate e . (/sx)) [-1000..1000] of
         Just cs' -> do
             cs <- mapM processCoordinate cs'
-            mapM_ (uncurry $ drawLine r) (zip cs $ tail cs)
+            mapM_ (mapM (uncurry $ drawLine r)) (pairs cs)
             present r
             drawGraph' r
         Nothing -> return ()
