@@ -8,7 +8,7 @@ import RPN (Equation, evaluateWith)
 import Data.Map (fromList)
 import Foreign.C (CInt)
 import Control.Monad (void)
-import Control.Monad.Reader (ReaderT, asks, runReaderT)
+import Control.Monad.Reader (ReaderT, asks, ask, runReaderT)
 import Data.Function (on)
 
 
@@ -21,8 +21,8 @@ data PlotSettings = PlotSettings
 type Plot = ReaderT PlotSettings IO
 
 pairs :: [a] -> Maybe [(a, a)]
-pairs xs@(_:ys) = Just (zip xs ys)
 pairs []        = Nothing
+pairs xs@(_:ys) = Just (zip xs ys)
 
 getCoordinate :: Equation -> Double -> Maybe (Double, Double)
 getCoordinate e x = (x,)
@@ -35,6 +35,11 @@ processCoordinate (x, y) = do
     return $ P $ V2
         (round $ (fromIntegral dx / 2) + x * sx)
         (round $ (fromIntegral dy / 2) - y * sy)
+
+getPoints :: Plot (Maybe [Point V2 CInt])
+getPoints = ask >>= (\PlotSettings { equation=e, scale=(sx,_) }
+    -> traverse (mapM processCoordinate)
+        (mapM (getCoordinate e . (/ sx)) [-1000..1000]))
 
 handleEvents :: Plot ()
 handleEvents = void pollEvents
@@ -51,22 +56,19 @@ clearScreen r = do
     rendererDrawColor r $= V4 255 255 255 255
     clear r
 
+drawLines :: Renderer -> [Point V2 CInt] -> Plot ()
+drawLines r = mapM_ (mapM (uncurry $ drawLine r)) . pairs
+
 drawGraph' :: Renderer -> Plot ()
 drawGraph' r = do
     handleEvents
     clearScreen r
     drawAxis r
     rendererDrawColor r $= V4 255 0 0 255
+    getPoints >>= mapM_ (drawLines r)
+    present r
+    drawGraph' r
 
-    e       <- asks equation
-    (sx, _) <- asks scale
-    case mapM (getCoordinate e . (/sx)) [-1000..1000] of
-        Just cs' -> do
-            cs <- mapM processCoordinate cs'
-            mapM_ (mapM (uncurry $ drawLine r)) (pairs cs)
-            present r
-            drawGraph' r
-        Nothing -> return ()
 
 drawGraph :: Renderer -> PlotSettings -> IO ()
 drawGraph r = runReaderT (drawGraph' r)
