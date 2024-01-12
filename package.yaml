@@ -24,6 +24,7 @@ dependencies:
 - containers
 - sdl2
 - mtl
+- vector
 
 ghc-options:
 - -Wall
