@@ -1,24 +1,31 @@
 {-# LANGUAGE TupleSections #-}
 module Grapher
     ( drawGraph
-    , PlotSettings(..)
+    , PlotEnvironment(..)
+    , PlotState(..)
     ) where
 import SDL (Renderer, rendererDrawColor, V4 (V4), ($=), clear, present, pollEvents, Point(P), V2(V2), drawLine)
 import RPN (Equation, evaluateWith)
 import Data.Map (fromList)
 import Foreign.C (CInt)
 import Control.Monad (void)
-import Control.Monad.Reader (ReaderT, asks, ask, runReaderT)
+import Control.Monad.Reader (ReaderT, asks, runReaderT, lift)
+import Control.Monad.State (StateT, gets, evalStateT)
 import Data.Function (on)
 
 
-data PlotSettings = PlotSettings
+data PlotEnvironment = PlotEnvironment
     { dimensions :: !(Int, Int)
     , equation   :: !Equation
-    , scale      :: !(Double, Double)
     }
 
-type Plot = ReaderT PlotSettings IO
+newtype PlotState = PlotState
+    { scale :: (Double, Double)
+    }
+
+--type Plot = ReaderT PlotSettings IO
+
+type Plot = ReaderT PlotEnvironment (StateT PlotState IO)
 
 pairs :: [a] -> Maybe [(a, a)]
 pairs []        = Nothing
@@ -30,16 +37,18 @@ getCoordinate e x = (x,)
 
 processCoordinate :: (Double, Double) -> Plot (Point V2 CInt)
 processCoordinate (x, y) = do
-    (sx, sy) <- asks scale
+    (sx, sy) <- lift $ gets scale
     (dx, dy) <- asks dimensions
     return $ P $ V2
         (round $ (fromIntegral dx / 2) + x * sx)
         (round $ (fromIntegral dy / 2) - y * sy)
 
 getPoints :: Plot (Maybe [Point V2 CInt])
-getPoints = ask >>= (\PlotSettings { equation=e, scale=(sx,_) }
-    -> traverse (mapM processCoordinate)
-        (mapM (getCoordinate e . (/ sx)) [-1000..1000]))
+getPoints = do
+    e  <- asks equation
+    sx <- gets (fst . scale)
+    traverse (mapM processCoordinate)
+        (mapM (getCoordinate e . (/ sx)) [-1000..1000])
 
 handleEvents :: Plot ()
 handleEvents = void pollEvents
@@ -69,6 +78,5 @@ drawGraph' r = do
     present r
     drawGraph' r
 
-
-drawGraph :: Renderer -> PlotSettings -> IO ()
-drawGraph r = runReaderT (drawGraph' r)
+drawGraph :: Renderer -> PlotEnvironment -> PlotState -> IO ()
+drawGraph r pe = evalStateT $ runReaderT (drawGraph' r) pe
