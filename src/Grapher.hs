@@ -9,10 +9,13 @@ import RPN (Equation, evaluateWith)
 import qualified Data.Map (fromList)
 import Data.Vector.Storable (fromList)
 import Foreign.C (CInt)
-import Control.Monad (void)
-import Control.Monad.Reader (ReaderT, asks, runReaderT, lift)
-import Control.Monad.State (StateT, gets, evalStateT)
+import Control.Monad (when)
+import Control.Monad.Reader (ReaderT, asks, runReaderT, lift, liftIO)
+import Control.Monad.State (StateT, gets, evalStateT, get, put)
 import Data.Function (on)
+import SDL (pollEvents)
+import Data.Maybe (mapMaybe)
+import Control.Arrow (Arrow(second, first))
 
 
 data PlotEnvironment = PlotEnvironment
@@ -45,8 +48,29 @@ getPoints = do
     traverse (mapM processCoordinate)
         (mapM (getCoordinate e . (/ sx)) [-1000..1000])
 
+getPressedKeys :: IO [SDL.Keycode]
+getPressedKeys = do
+    mapMaybe (\e
+        -> case SDL.eventPayload e of
+            SDL.KeyboardEvent ke
+                -> if SDL.keyboardEventKeyMotion ke == SDL.Pressed
+                    then Just $ SDL.keysymKeycode (SDL.keyboardEventKeysym ke)
+                    else Nothing
+            _otherEvent
+                -> Nothing) <$> pollEvents
+
 handleEvents :: Plot ()
-handleEvents = void SDL.pollEvents
+handleEvents = do
+    ks <- liftIO getPressedKeys
+    ps <- lift get
+    when (SDL.KeycodeW `elem` ks) $
+        lift $ put ps { scale = second (subtract 10) (scale ps) }
+    when (SDL.KeycodeS `elem` ks) $
+        lift $ put ps { scale = second (+10) (scale ps) }
+    when (SDL.KeycodeD `elem` ks) $
+        lift $ put ps { scale = first (subtract 10) (scale ps) }
+    when (SDL.KeycodeA `elem` ks) $
+        lift $ put ps { scale = first (+ 10) (scale ps) }
 
 drawAxis :: SDL.Renderer -> Plot ()
 drawAxis r = do
