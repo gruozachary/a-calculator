@@ -9,13 +9,12 @@ import RPN (Equation, evaluateWith)
 import qualified Data.Map (fromList)
 import Data.Vector.Storable (fromList)
 import Foreign.C (CInt)
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Control.Monad.Reader (ReaderT, asks, runReaderT, lift, liftIO)
 import Control.Monad.State (StateT, gets, evalStateT, get, put)
 import Data.Function (on)
 import SDL (pollEvents)
 import Data.Maybe (mapMaybe)
-import Control.Arrow (Arrow(second, first))
 
 
 data PlotEnvironment = PlotEnvironment
@@ -59,18 +58,23 @@ getPressedKeys = do
             _otherEvent
                 -> Nothing) <$> pollEvents
 
-handleEvents :: Plot ()
+handleEvents :: Plot Bool 
 handleEvents = do
     ks <- liftIO getPressedKeys
     ps <- lift get
+
+    let (sx, sy) = scale ps
+
     when (SDL.KeycodeW `elem` ks) $
-        lift $ put ps { scale = second (subtract 10) (scale ps) }
+        lift $ put ps { scale = (sx - 10, sy) }
     when (SDL.KeycodeS `elem` ks) $
-        lift $ put ps { scale = second (+10) (scale ps) }
+        lift $ put ps { scale = (sx + 10, sy) }
     when (SDL.KeycodeD `elem` ks) $
-        lift $ put ps { scale = first (subtract 10) (scale ps) }
+        lift $ put ps { scale = (sx, sy - 10) }
     when (SDL.KeycodeA `elem` ks) $
-        lift $ put ps { scale = first (+ 10) (scale ps) }
+        lift $ put ps { scale = (sx, sy + 10) }
+
+    return $ SDL.KeycodeQ `elem` ks
 
 drawAxis :: SDL.Renderer -> Plot ()
 drawAxis r = do
@@ -90,13 +94,13 @@ clearScreen r = do
 
 drawGraph' :: SDL.Renderer -> Plot ()
 drawGraph' r = do
-    handleEvents
+    q <- handleEvents
     clearScreen r
     drawAxis r
     SDL.rendererDrawColor r SDL.$= SDL.V4 255 0 0 255
     getPoints >>= mapM_ (SDL.drawLines r . fromList)
     SDL.present r
-    drawGraph' r
+    unless q (drawGraph' r)
 
 drawGraph :: SDL.Renderer -> PlotEnvironment -> PlotState -> IO ()
 drawGraph r = evalStateT . runReaderT (drawGraph' r)
