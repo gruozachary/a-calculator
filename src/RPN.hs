@@ -16,9 +16,14 @@ data BinaryOp
     | Div
     | Pow
 
+data UnaryOp
+    = Sin
+    | Cos
+
 data Token
     = Literal !Double
     | BinaryOp !BinaryOp
+    | UnaryOp !UnaryOp
     | Variable !String
 
 type Stack = [Double]
@@ -34,6 +39,14 @@ binaryop o (x:y:xs) = Just $ (:xs)
         Pow -> y ** x
 binaryop _ _        = Nothing
 
+
+unaryop :: UnaryOp -> Stack -> Maybe Stack
+unaryop o (x:xs) = Just $ (:xs)
+    $ case o of
+        Sin -> sin x
+        Cos -> cos x
+unaryop _ _        = Nothing
+
 evaluate :: Equation -> Maybe Double
 evaluate = (`evaluateWith` empty)
 
@@ -46,16 +59,19 @@ evaluateWith (Equation ts') hm = f ts' []
         f (t:ts) xs = f ts =<< case t of
             Literal x  -> Just $ x : xs
             BinaryOp o -> binaryop o xs
+            UnaryOp o  -> unaryop o xs
             Variable i -> (:xs) <$> Data.Map.lookup i hm
 
 parseLexeme :: String -> Maybe Token
 parseLexeme xs = Just $ case xs of
-    "+" -> BinaryOp Add
-    "-" -> BinaryOp Sub
-    "*" -> BinaryOp Mul
-    "/" -> BinaryOp Div
-    "^" -> BinaryOp Pow
-    _   ->
+    "+"   -> BinaryOp Add
+    "-"   -> BinaryOp Sub
+    "*"   -> BinaryOp Mul
+    "/"   -> BinaryOp Div
+    "^"   -> BinaryOp Pow
+    "sin" -> UnaryOp Sin
+    "cos" -> UnaryOp Cos
+    _     ->
         case readMaybe xs of
             Just n  -> Literal n
             Nothing -> Variable xs
