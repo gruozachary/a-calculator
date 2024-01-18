@@ -15,10 +15,12 @@ data BinaryOp
     | Mul
     | Div
     | Pow
+    | Log
 
 data UnaryOp
     = Sin
     | Cos
+    | Ln
 
 data Token
     = Literal !Double
@@ -37,6 +39,7 @@ binaryop o (x:y:xs) = Just $ (:xs)
         Mul -> y * x
         Div -> y / x
         Pow -> y ** x
+        Log -> logBase y x
 binaryop _ _        = Nothing
 
 
@@ -45,6 +48,7 @@ unaryop o (x:xs) = Just $ (:xs)
     $ case o of
         Sin -> sin x
         Cos -> cos x
+        Ln  -> log x
 unaryop _ _        = Nothing
 
 evaluate :: Equation -> Maybe Double
@@ -69,8 +73,10 @@ parseLexeme xs = Just $ case xs of
     "*"   -> BinaryOp Mul
     "/"   -> BinaryOp Div
     "^"   -> BinaryOp Pow
+    "log" -> BinaryOp Log
     "sin" -> UnaryOp Sin
     "cos" -> UnaryOp Cos
+    "ln"  -> UnaryOp Ln
     _     ->
         case readMaybe xs of
             Just n  -> Literal n
